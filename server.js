@@ -1,25 +1,20 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config({ path: './config.env' });
 
 const app = require('./app');
+const connectDatabase = require('./utils/connectDatabase');
 
-const DB_URI = process.env.MONGODB_URI.replace(
-  '<PASSWORD>',
-  process.env.DB_PASSWORD,
-);
+const startServer = async () => {
+  await connectDatabase();
+  console.log('DB connection successful');
 
-mongoose
-  .connect(DB_URI, {
-    useNewUrlParser: true,
-    useCreateIndex: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('DB connection successfull'));
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`App running on http://localhost:${port}`);
+  });
+};
 
-// SERVER START
-const port = process.env.PORT;
-app.listen(port, () => {
-  console.log(`App running on http://localhost:${port}`);
+startServer().catch((error) => {
+  console.error('Unable to start server:', error);
+  process.exitCode = 1;
 });

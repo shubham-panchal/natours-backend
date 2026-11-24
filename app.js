@@ -10,6 +10,7 @@ const hpp = require('hpp');
 const compression = require('compression');
 
 const AppError = require('./utils/apiError');
+const connectDatabase = require('./utils/connectDatabase');
 const globalErrorHandler = require('./controllers/errorController');
 
 // ROUTERS
@@ -78,6 +79,15 @@ app.use(compression()); // compresses texts sent to client
 
 // // Serving static files
 // app.use(express.static(`${__dirname}/public`));
+
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ROUTES
 app.use('/api/v1/tours', tourRouter);
