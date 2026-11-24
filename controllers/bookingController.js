@@ -12,6 +12,24 @@ exports.getBooking = factory.getOne(Booking);
 exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);
 
+exports.getMyBookings = catchAsync(async (req, res) => {
+  const bookings = await Booking.find({ user: req.user.id })
+    .populate({ path: 'user', select: '_id' })
+    .populate({
+      path: 'tour',
+      select:
+        'name slug imageCover summary difficulty duration startDates locations maxGroupSize price ratingsAverage ratingsQuantity startLocation',
+    });
+
+  res.status(200).json({
+    status: 'success',
+    result: bookings.length,
+    data: {
+      data: bookings,
+    },
+  });
+});
+
 exports.getCheckoutSession = catchAsync(async (req, res, next) => {
   // 1) Get the currently booked tour
   const tour = await Tour.findById(req.params.tourId);
@@ -53,7 +71,7 @@ const createBookingCheckout = async (session) => {
   await Booking.create({ tour, user, price });
 };
 
-exports.webhookCheckout = (req, res, next) => {
+exports.webhookCheckout = catchAsync(async (req, res) => {
   const signature = req.headers['stripe-signature'];
   let event;
   try {
@@ -66,8 +84,9 @@ exports.webhookCheckout = (req, res, next) => {
     return res.status(400).send(`Webhook error: ${error.message}`);
   }
 
-  if (event.type === 'checkout.session.completed')
-    createBookingCheckout(event.data.object);
+  if (event.type === 'checkout.session.completed') {
+    await createBookingCheckout(event.data.object);
+  }
 
   res.status(200).json({ received: true });
-};
+});
