@@ -136,9 +136,8 @@ tourSchema.virtual('reviews', {
 
 // DOCUMENT MIDDLEWARE: runs before .save() and .create()
 // "this" points to current document
-tourSchema.pre('save', function (next) {
+tourSchema.pre('save', function () {
   this.slug = slugify(this.name, { lower: true });
-  next();
 });
 
 // post save document middleware
@@ -148,10 +147,9 @@ tourSchema.pre('save', function (next) {
 // });
 
 // QUERY MIDDLEWARE - the "find" hook makes it a query middleware and "this" points to the current query
-tourSchema.pre(/^find/, function (next) {
+tourSchema.pre(/^find/, function () {
   this.find({ secretTour: { $ne: true } });
   this.start = Date.now();
-  next();
 });
 
 // tourSchema.post(/^find/, function (docs, next) {
@@ -160,13 +158,12 @@ tourSchema.pre(/^find/, function (next) {
 //   next();
 // });
 
-tourSchema.pre(/^find/, function (next) {
+tourSchema.pre(/^find/, function () {
   // .populate('guides') fills the actual user data of the ids in the guides and sends in the response
   this.populate({
     path: 'guides',
     select: '-__v -passwordChangedAt',
   });
-  next();
 });
 
 // // AGGREGATION MIDDLEWARE
