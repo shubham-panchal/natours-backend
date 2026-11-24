@@ -8,6 +8,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const compression = require('compression');
+const { ipKeyGenerator } = rateLimit;
 
 const AppError = require('./utils/apiError');
 const connectDatabase = require('./utils/connectDatabase');
@@ -20,6 +21,7 @@ const reviewRouter = require('./routes/reviewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Enable CORS for routes and origins
 app.use(
@@ -47,6 +49,7 @@ const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000, // min * sec * ms => 1 hour
   message: 'Too many request from this IP, please try again in an hour',
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
 });
 app.use('/api', limiter);
 
