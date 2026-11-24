@@ -13,19 +13,18 @@ exports.updateBooking = factory.updateOne(Booking);
 exports.deleteBooking = factory.deleteOne(Booking);
 
 exports.getMyBookings = catchAsync(async (req, res) => {
-  const bookings = await Booking.find({ user: req.user.id })
-    .populate({ path: 'user', select: '_id' })
-    .populate({
-      path: 'tour',
-      select:
-        'name slug imageCover summary difficulty duration startDates locations maxGroupSize price ratingsAverage ratingsQuantity startLocation',
-    });
+  // 1) Find all bookings
+  const bookings = await Booking.find({ user: req.user.id });
+
+  // 2) Find tours with the returned IDs
+  const tourIDs = bookings.map((el) => el.tour?._id);
+  const tours = await Tour.find({ _id: { $in: tourIDs } });
 
   res.status(200).json({
     status: 'success',
-    result: bookings.length,
+    result: tours.length,
     data: {
-      data: bookings,
+      data: tours,
     },
   });
 });
