@@ -8,7 +8,6 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const compression = require('compression');
-const { ipKeyGenerator } = rateLimit;
 
 const AppError = require('./utils/apiError');
 const connectDatabase = require('./utils/connectDatabase');
@@ -19,9 +18,10 @@ const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
+const bookingController = require('./controllers/bookingController');
 
 const app = express();
-app.set('trust proxy', 1);
+app.enable('trust proxy');
 
 // Enable CORS for routes and origins
 app.use(
@@ -49,9 +49,14 @@ const limiter = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 1000, // min * sec * ms => 1 hour
   message: 'Too many request from this IP, please try again in an hour',
-  keyGenerator: (req) => ipKeyGenerator(req.ip),
 });
 app.use('/api', limiter);
+
+app.post(
+  '/webhook-checkout',
+  express.raw({ type: 'application/json' }),
+  bookingController.webhookCheckout,
+);
 
 // Body parser, reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
